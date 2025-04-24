@@ -1,0 +1,13 @@
+admin
+login
+dashboard
+config
+cpanel
+administrator
+webadmin
+portal
+secure
+user
+auth
+admin/login
+admin/dashboard
