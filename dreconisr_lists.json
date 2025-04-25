@@ -1,0 +1,151 @@
+{
+    "fullscope": {
+      "path": "xdata/fullscope.txt",
+      "desc": "Scan with fullscope wordlist (all-in-one)"
+    },
+    "admin": {
+      "path": "xdata/authpaths-md.txt",
+      "desc": "Scan with admin login paths"
+    },
+    "auth-sm": {
+      "path": "xdata/authpaths-sm.txt",
+      "desc": "Scan with small admin path list"
+    },
+    "auth-md": {
+      "path": "xdata/authpaths-md.txt",
+      "desc": "Scan with medium admin path list"
+    },
+    "fpath": {
+      "path": "xdata/deepmap-md.txt",
+      "desc": "Scan with default full path list"
+    },
+    "fpath-sm": {
+      "path": "xdata/deepmap-sm.txt",
+      "desc": "Scan with small path list"
+    },
+    "fpath-md": {
+      "path": "xdata/deepmap-md.txt",
+      "desc": "Scan with medium path list"
+    },
+    "fpath-v": {
+      "path": "xdata/deepmap-v.txt",
+      "desc": "Scan with very large paths"
+    },
+    "fpath-rl": {
+      "path": "xdata/deepmap-rl.txt",
+      "desc": "Scan with real-world leaked paths"
+    },
+    "fmanager": {
+      "path": "xdata/uplinks.txt",
+      "desc": "Scan with file manager and backend explorer paths"
+    },
+    "blur-sm": {
+      "path": "xdata/blurwords-sm.txt",
+      "desc": "Obfuscated paths (small)"
+    },
+    "blur-md": {
+      "path": "xdata/blurwords-md.txt",
+      "desc": "Obfuscated paths (medium)"
+    },
+    "blur-v": {
+      "path": "xdata/blurwords-v.txt",
+      "desc": "Obfuscated paths (very large)"
+    },
+    "file-sm": {
+      "path": "xdata/fileroute-sm.txt",
+      "desc": "File route (small)"
+    },
+    "file-md": {
+      "path": "xdata/fileroute-md.txt",
+      "desc": "File route (medium)"
+    },
+    "file-v": {
+      "path": "xdata/fileroute-v.txt",
+      "desc": "File route (very large)"
+    },
+    "extdoor": {
+      "path": "xdata/extdoor.txt",
+      "desc": "Extension-based backdoors"
+    },
+    "xmlgate": {
+      "path": "xdata/xmlgate.txt",
+      "desc": "XML-based access points"
+    },
+    "vaultsight": {
+      "path": "xdata/vaultsight.txt",
+      "desc": "Vault or credential storage endpoints"
+    },
+    "finderhole": {
+      "path": "xdata/finderhole.txt",
+      "desc": "Hidden file/folder guess list"
+    },
+    "netdebug": {
+      "path": "xdata/netdebug_tr.txt",
+      "desc": "Network debugging panels"
+    },
+    "dbconsole": {
+      "path": "xdata/dbconsole_m.txt",
+      "desc": "Database consoles or tools"
+    },
+    "oraframe": {
+      "path": "xdata/oraframe_tr.txt",
+      "desc": "Oracle-related endpoints"
+    },
+    "springmap": {
+      "path": "xdata/springdotma.txt",
+      "desc": "Spring Boot app endpoints"
+    },
+    "sapsight": {
+      "path": "xdata/sapsight_pa.txt",
+      "desc": "SAP-related endpoints"
+    },
+    "consulpeek": {
+      "path": "xdata/consulpeek.txt",
+      "desc": "Hashicorp Consul paths"
+    },
+    "core-as": {
+      "path": "xdata/coreback_as.txt",
+      "desc": "Backdoors: ASP"
+    },
+    "core-js": {
+      "path": "xdata/coreback_js.txt",
+      "desc": "Backdoors: JSP"
+    },
+    "core-ph": {
+      "path": "xdata/coreback_ph.txt",
+      "desc": "Backdoors: PHP"
+    },
+    "core-pl": {
+      "path": "xdata/coreback_pl.txt",
+      "desc": "Backdoors: Perl"
+    },
+    "rubytrace": {
+      "path": "xdata/rubytrace_c.txt",
+      "desc": "Ruby/Rails exposed configs"
+    },
+    "nodemap": {
+      "path": "xdata/nodemap.txt",
+      "desc": "Node.js dev/test endpoints"
+    },
+    "formtags": {
+      "path": "xdata/formtags.txt",
+      "desc": "Common form input names"
+    },
+    "idflow": {
+      "path": "xdata/idflow_map.txt",
+      "desc": "ID flow leaks in endpoints"
+    },
+    "conflux": {
+      "path": "xdata/conflux_ctr.txt",
+      "desc": "Confluence traces and API"
+    },
+    "vpnnode": {
+      "path": "xdata/vpnnode_sco.txt",
+      "desc": "VPN management nodes"
+    },
+    "goprobe": {
+      "path": "xdata/goprobe_pat.txt",
+      "desc": "Golang metrics/debug routes"
+    }
+  }
+  
