@@ -5,7 +5,7 @@ DreconisR adalah alat pemindaian direktori berbasis CLI yang cepat, ringkas, dan
 ## Instalasi
 
 ```bash
-git clone https://github.com/username/DreconisR.git
+https://github.com/G181124/DreconisR
 cd DreconisR
 pip install -r requirements.txt
 ```
