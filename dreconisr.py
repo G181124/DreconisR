@@ -4,6 +4,7 @@ import sys
 import json
 import requests
 import time
+import threading
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -31,17 +32,17 @@ def show_banner():
 |_____/|_|   \\____)____)___/|_| |_|_(___/      |_|{RESET}
                                                   
 {GREEN}[@] Author : RL
-[~] Version : 1.0.0{RESET}"""
+[~] Version : 1.1.1{RESET}"""
     print(banner)
 
 # =========================
-# Load Wordlist JSON Config [GR]
+# Load Wordlist JSON Config
 # =========================
-with open(os.path.join(os.path.dirname(__file__), "dreconisr_lists.json"), "r") as f:  # [GR]
-    wordlist_config = json.load(f)  # [GR]
+with open(os.path.join(os.path.dirname(__file__), "dreconisr_lists.json"), "r") as f:
+    wordlist_config = json.load(f)
 
-WORDLIST_MAP = {k: v["path"] for k, v in wordlist_config.items()}  # [GR]
-HELP_MAP = {k: v["desc"] for k, v in wordlist_config.items()}  # [GR]
+WORDLIST_MAP = {k: v["path"] for k, v in wordlist_config.items()}
+HELP_MAP = {k: v["desc"] for k, v in wordlist_config.items()}
 
 # =========================
 # Argument Parser
@@ -51,14 +52,13 @@ def parse_arguments():
         description="DreconisR - Fast Directory Scanner with clean CLI",
         epilog=(
             "Example Usage:\n"
-            "  python3 dreconisr.py -u https://example.com --admin --save\n"
-            "  python3 dreconisr.py -u https://target.com --fullscope --fastscan\n\n"
+            "  python3 dreconisr.py -u https://example.com --auth-sm --save\n"
+            "  python3 dreconisr.py -u https://target.com --fullscope --ultrafast\n\n"
             "Notes:\n"
-            "  --threads: Ideal range 10–30. Max 100. Too high can trigger rate-limits.\n"
-            "  --timeout: Ideal 2–5 sec. Max 60. Timeout >10 may slow scanning.\n"
-            "  --fastscan: Use optimal preset (threads=30, timeout=2, status=200,403).\n"
-            "  --delay: Add delay between requests (in seconds). Useful to avoid bans."
-        )
+            "  --threads: Ideal range 10–30. Max 100.\n"
+            "  --timeout: Ideal 2–5 sec. Max 60.\n"
+            "  --ultrafast: threads=60, timeout=1, status=200,403.\n"
+            "  Speed may vary depending on server response.")
     )
     parser.add_argument("-u", "--url", required=True, help="Target URL (e.g., https://example.com)")
     parser.add_argument("--save", action="store_true", help="Save output result to /output/ folder")
@@ -68,13 +68,27 @@ def parse_arguments():
     parser.add_argument("--threads", type=int, default=10, help="Number of threads to use (default: 10)")
     parser.add_argument("--delay", type=float, default=0, help="Delay (in seconds) between each request (default: 0)")
     parser.add_argument("--verbose", action="store_true", help="Show all responses including 404 and 500")
-    parser.add_argument("--fastscan", action="store_true", help="Use optimized config: threads=30, timeout=2, status=200,403")
+    parser.add_argument("--ultrafast", action="store_true", help="Use max speed config: threads=60, timeout=1, status=200,403")
 
     group = parser.add_mutually_exclusive_group()
     for key in WORDLIST_MAP:
         group.add_argument(f"--{key}", action="store_true", help=HELP_MAP.get(key, f"Use wordlist: {WORDLIST_MAP[key]}"))
 
     return parser.parse_args()
+
+# =========================
+# Spinner + Timer Thread
+# =========================
+def live_indicator(start_time, stop_flag):
+    spinner = ["|", "/", "-", "\\"]
+    idx = 0
+    while not stop_flag.is_set():
+        elapsed = int(time.time() - start_time)
+        sys.stdout.write(f"\r[{spinner[idx % 4]}] Running... Elapsed: {elapsed}s")
+        sys.stdout.flush()
+        idx += 1
+        time.sleep(0.3)
+    print("\r", end="")  # clear line
 
 # =========================
 # Wordlist Loader
@@ -102,7 +116,7 @@ def parse_status_filter(status_str):
 # =========================
 # Scanner Worker
 # =========================
-def scan_single_path(base_url, path, timeout, status_filter, verbose, delay):
+def scan_single_path(base_url, path, timeout, status_filter, verbose, delay, results, counter, total, lock):
     full_url = base_url.rstrip("/") + "/" + path
     try:
         r = requests.get(full_url, timeout=timeout)
@@ -137,23 +151,34 @@ def scan_single_path(base_url, path, timeout, status_filter, verbose, delay):
             if code in [200, 301, 302, 403]:
                 show = True
 
+        with lock:
+            counter[0] += 1
+            current = counter[0]
+
         if show:
-            print(f"{color}{tag} {code} => {full_url}{RESET}")
-            return {"status": code, "url": full_url}
+            print(f"{color}{tag} {code} => {full_url} {CYAN}[|] {current}/{total}{RESET}")
+            results.append({"status": code, "url": full_url})
     except requests.exceptions.RequestException:
-        return None
+        with lock:
+            counter[0] += 1
 
 # =========================
 # Scanner Main
 # =========================
 def scan_directory(url, wordlist, timeout, status_filter, threads, verbose, delay):
     found = []
+    counter = [0]
+    lock = threading.Lock()
+    total = len(wordlist)
+
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = [executor.submit(scan_single_path, url, path, timeout, status_filter, verbose, delay) for path in wordlist]
+        futures = [
+            executor.submit(scan_single_path, url, path, timeout, status_filter, verbose, delay, found, counter, total, lock)
+            for path in wordlist
+        ]
         for future in futures:
-            result = future.result()
-            if result:
-                found.append(result)
+            future.result()
+
     return found
 
 # =========================
@@ -183,52 +208,50 @@ def main():
     show_banner()
     args = parse_arguments()
 
-    if args.fastscan:
+    if args.ultrafast:
         if args.threads != 10 or args.timeout != 5 or args.status:
-            print(f"{RED}[!] Do not combine --fastscan with manual config (--threads, --timeout, --status).{RESET}")
+            print(f"{RED}[!] Do not combine --ultrafast with manual config (--threads, --timeout, --status).{RESET}")
             sys.exit(1)
-        args.threads = 30
-        args.timeout = 2
+        args.threads = 60
+        args.timeout = 1
         args.status = "200,403"
-        print(f"{GREEN}[+] Fastscan mode activated: threads=30, timeout=2, status=200,403{RESET}")
+        print(f"{GREEN}[+] UltraFast Mode Activated{RESET}")
 
     if args.threads > 100:
         print(f"{RED}[!] Thread count too high. Max allowed: 100.{RESET}")
         sys.exit(1)
     elif args.threads >= 50:
-        print(f"{YELLOW}[!] Warning: Thread count over 50 may overload weak networks, cause dropped packets, or trigger rate-limiting on the target server. Ideal range is 10–30.{RESET}")
+        print(f"{YELLOW}[!] Warning: Thread count over 50 may overload weak networks or trigger rate-limiting.{RESET}")
     elif args.threads < 1:
         print(f"{RED}[!] Thread count must be at least 1.{RESET}")
         sys.exit(1)
 
     if args.timeout > 60:
-        print(f"{RED}[!] Timeout too high. Max allowed: 60 seconds. Excessive timeout may cause prolonged scan durations and unresponsiveness.{RESET}")
+        print(f"{RED}[!] Timeout too high. Max allowed: 60 seconds.{RESET}")
         sys.exit(1)
     elif args.timeout > 10:
-        print(f"{YELLOW}[!] Warning: Timeout above 10 seconds is rarely needed. Ideal range is 2–5. Excessive wait may slow down overall performance.{RESET}")
+        print(f"{YELLOW}[!] Warning: Timeout above 10s is rarely needed. Ideal: 2–5s.{RESET}")
     elif args.timeout < 1:
         print(f"{RED}[!] Timeout must be at least 1 second.{RESET}")
         sys.exit(1)
 
-    # Determine selected wordlist [GR]
     selected_wordlist = None
     for flag, path in WORDLIST_MAP.items():
         if getattr(args, flag.replace("-", "_"), False):
             selected_wordlist = path
             break
     if not selected_wordlist:
-        selected_wordlist = WORDLIST_MAP["fpath"]  # fallback default
+        selected_wordlist = WORDLIST_MAP["fpath"]
 
-    print(f"[{datetime.now().strftime('%Y-%m-%d')}] [{datetime.now().strftime('%H:%M:%S')}] Parsing Wordlist...")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Parsing Wordlist...")
     wordlist = load_wordlist(selected_wordlist)
-    print(f"[{datetime.now().strftime('%Y-%m-%d')}] [{datetime.now().strftime('%H:%M:%S')}] Wordlist is Ready")
-    print(f"[{datetime.now().strftime('%Y-%m-%d')}] [{datetime.now().strftime('%H:%M:%S')}] Total Paths to Check: {len(wordlist)}")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Wordlist Ready: {len(wordlist)} paths")
+    if len(wordlist) >= 50000:
+        print(f"{YELLOW}[!] Warning: Large wordlist detected. This scan may take longer.{RESET}")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Checking Host {args.url}...")
+    print(f"{CYAN}[i] Note: Scan speed depends on target response time, not just your system or threads.{RESET}")
 
     status_filter = parse_status_filter(args.status)
-
-    print(f"[{datetime.now().strftime('%Y-%m-%d')}] [{datetime.now().strftime('%H:%M:%S')}] Checking HOST...")
-    print(f"[{datetime.now().strftime('%Y-%m-%d')}] [{datetime.now().strftime('%H:%M:%S')}] {args.url} Is Ready\n")
-
     results = scan_directory(args.url, wordlist, args.timeout, status_filter, args.threads, args.verbose, args.delay)
 
     if args.save:
