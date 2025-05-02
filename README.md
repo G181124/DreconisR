@@ -1,99 +1,78 @@
 # DreconisR
 
-**DreconisR** adalah CLI tool ringan untuk mencari direktori tersembunyi di sebuah situs. Dirancang agar proses scanning lebih stabil, bersih, dan bisa dipakai langsung tanpa konfigurasi rumit.
+DreconisR adalah alat pemindaian direktori berbasis CLI yang cepat, ringkas, dan fleksibel. Dirancang untuk memberikan hasil responsif dengan berbagai opsi pemfilteran dan preset kecepatan.
 
----
-
-## 🔧 Instalasi
+## Instalasi
 
 ```bash
-git clone https://github.com/G181124/DreconisR
+git clone https://github.com/username/DreconisR.git
 cd DreconisR
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
-
-## 🚀 Cara Pakai Singkat
+## Penggunaan
 
 ```bash
-python3 dreconisr.py -u <target_url> [pilih salah satu wordlist] [opsi tambahan]
+python3 dreconisr.py -u https://target.com --auth-md --save
 ```
 
-Contoh:
-```bash
-python3 dreconisr.py -u https://example.com --admin --save --json
-```
+### Contoh Lain:
 
----
+* Scan dengan wordlist kecil:
 
-## 📂 Pilihan Wordlist
+  ```bash
+  python3 dreconisr.py -u https://target.com --fpath-sm
+  ```
 
-Pilih satu sesuai kebutuhan. Jika tidak memilih, tool akan menggunakan `--fpath` secara otomatis.
+* Gunakan mode fastscan:
 
-| Opsi         | File                  | Isi                                      |
-|--------------|------------------------|-------------------------------------------|
-| `--admin`    | `xdata/authpaths.txt`  | Path login/admin                          |
-| `--fpath`    | `xdata/deepmap.txt`    | Path umum dan file yang sering terbuka    |
-| `--fmanager` | `xdata/uplinks.txt`    | Path file manager / upload                |
-| `--fullscope`| `xdata/fullscope.txt`  | Gabungan semua wordlist di atas           |
+  ```bash
+  python3 dreconisr.py -u https://target.com --fullscope --fastscan
+  ```
 
----
+* Gunakan mode ultrafast:
 
-## ⚙️ Opsi Lain
+  ```bash
+  python3 dreconisr.py -u https://target.com --auth-sm --ultrafast
+  ```
 
-| Opsi             | Fungsi                                                                    |
-|------------------|---------------------------------------------------------------------------|
-| `--save`         | Simpan hasil ke file `.txt` di folder `output/`                           |
-| `--json`         | Simpan hasil juga dalam format `.json`                                    |
-| `--status`       | Filter hasil berdasarkan status tertentu, contoh `--status 200,403`      |
-| `--verbose`      | Tampilkan semua hasil, termasuk error                                     |
-| `--threads`      | Default 10. Ideal 10–30. Maksimal 100                                     |
-| `--timeout`      | Default 5 detik. Maksimum 60 detik                                        |
-| `--delay`        | Delay antar request (dalam detik). Berguna untuk menghindari rate-limit  |
-| `--fastscan`     | Mode cepat preset: `threads=30 timeout=2 status=200,403`                 |
+* Simpan hasil dalam bentuk `.txt` dan `.drejson`:
 
----
+  ```bash
+  python3 dreconisr.py -u https://target.com --blur-sm --save --json
+  ```
 
-## 🚦 Validasi Otomatis
+## Opsi Penting
 
-- `--threads > 100` tidak diizinkan
-- `--threads >= 50` akan memunculkan peringatan
-- `--timeout > 60` tidak diizinkan
-- `--timeout > 10` akan memunculkan peringatan
-- `--fastscan` tidak dapat digabung dengan `--threads`, `--timeout`, atau `--status`
+| Flag           | Keterangan                                                 |
+| -------------- | ---------------------------------------------------------- |
+| `-u` / `--url` | Target URL yang akan dipindai                              |
+| `--save`       | Menyimpan hasil ke folder `output/`                        |
+| `--json`       | Menyimpan hasil juga dalam format JSON                     |
+| `--status`     | Menampilkan hanya kode status tertentu (mis. `200,403`)    |
+| `--timeout`    | Timeout request (default: 5 detik)                         |
+| `--threads`    | Jumlah thread (default: 10, max: 100)                      |
+| `--delay`      | Jeda antar request                                         |
+| `--verbose`    | Tampilkan semua respons (termasuk 404, 500)                |
+| `--fastscan`   | Preset cepat: threads=30, timeout=2, status=200,403        |
+| `--ultrafast`  | Preset sangat cepat: threads=60, timeout=1, status=200,403 |
 
----
+## Wordlist Flags
 
-## 💡 Contoh Penggunaan
+Gunakan hanya salah satu dari flag berikut untuk memilih wordlist:
 
-```bash
-# Scan semua path utama dengan konfigurasi cepat
-python3 dreconisr.py -u https://testphp.vulnweb.com --fullscope --fastscan
+* `--auth-sm`, `--auth-md`
+* `--fpath`, `--fpath-sm`, `--fpath-md`, `--fpath-v`, `--fpath-rl`
+* `--blur-sm`, `--blur-md`, `--blur-v`
+* `--file-sm`, `--file-md`, `--file-v`
+* `--extdoor`, `--vaultsight`, `--xmlgate`
+* `--netdebug`, `--dbconsole`, `--oraframe`, `--sapsight`, `--springmap`
+* `--core-asp`, `--core-php`, `--core-jsp`, `--core-pl`
+* `--consulpeek`, `--formtags`, `--finderhole`, `--conflux`, `--goprobe`, `--nodemap`, `--rubytrace`, `--idflow`, `--vpnnode`
+* `--fullscope`, `--fmanager`
 
-# Simpan hasil scan admin ke file txt & json
-python3 dreconisr.py -u https://juice-shop.herokuapp.com --admin --save --json
+## Catatan Tambahan
 
-# Scan dengan delay 0.5 detik
-python3 dreconisr.py -u https://example.com --fpath --delay 0.5
-
-# Tampilkan semua status termasuk error
-python3 dreconisr.py -u https://testphp.vulnweb.com --fullscope --verbose
-```
-
----
-
-## 🛠 Catatan Teknis
-
-- Pada beberapa target, hasil yang muncul bisa berbeda tergantung konfigurasi `--threads` dan `--delay`. Jika respons terasa terbatas, mencoba dengan `--threads 1` kadang memberi hasil tambahan yang tidak terlihat dalam mode multithread.
-- File hasil disimpan otomatis dengan timestamp
-
----
-
-## 📍 Penutup
-
-DreconisR dibuat untuk kebutuhan scanning cepat dan efisien, tanpa perlu instalasi tambahan. Bisa langsung digunakan di lingkungan terminal.
-
-**Repo:** [https://github.com/G181124/DreconisR](https://github.com/G181124/DreconisR)
+* Kecepatan pemindaian juga dipengaruhi oleh waktu respons dari target, bukan hanya pengaturan lokal Anda.
+* Idealnya gunakan `--threads` dalam rentang 10–30 jika tidak menggunakan preset.
+* Gunakan `--fastscan` atau `--ultrafast` **tanpa kombinasi pengaturan manual seperti `--timeout`, `--threads`, atau `--status`**.
